@@ -2,30 +2,36 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
 	"os"
 
 	"github.com/gin-gonic/gin"
+	"github.com/joho/godotenv"
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/google"
 )
 
 var (
-	CLIENT_ID         = os.Getenv("CLIENT_ID")
-	CLIENT_SECRET     = os.Getenv("CLIENT_SECRET")
 	googleOauthConfig *oauth2.Config
 	oauthStateString  = "random" // Replace this with a random string of your choice
 )
 
 func init() {
+	err := godotenv.Load(".env")
+	if err != nil {
+		log.Fatalf("Some error occured. Err: %s", err)
+	}
+
 	googleOauthConfig = &oauth2.Config{
-		ClientID:     CLIENT_ID,
-		ClientSecret: CLIENT_SECRET,
-		RedirectURL:  "http://localhost:4200/auth/callback", // add this in google auth client id (https://console.cloud.google.com/apis/credentials)
-		Scopes:       []string{"https://www.googleapis.com/auth/userinfo.email"},
-		Endpoint:     google.Endpoint,
+		ClientID:     os.Getenv("CLIENT_ID"),
+		ClientSecret: os.Getenv("CLIENT_SECRET"),
+		// RedirectURL:  "http://localhost:4200/auth/google/callback",
+		RedirectURL: "http://localhost:8080/api/v1/auth/google/callback",
+		Scopes:      []string{"openid", "email", "profile"},
+		Endpoint:    google.Endpoint,
 	}
 }
 
@@ -41,7 +47,8 @@ func main() {
 
 func handleLogin(c *gin.Context) {
 	url := googleOauthConfig.AuthCodeURL(oauthStateString)
-	c.Redirect(http.StatusTemporaryRedirect, url)
+	// c.Redirect(http.StatusTemporaryRedirect, url)
+	c.JSON(http.StatusOK, gin.H{"link": url})
 }
 
 func handleCallback(c *gin.Context) {
@@ -59,16 +66,46 @@ func handleCallback(c *gin.Context) {
 		return
 	}
 
+	// Fetch the user's profile information
+	client := googleOauthConfig.Client(context.Background(), token)
+	resp, err := client.Get("https://www.googleapis.com/oauth2/v2/userinfo")
+	if err != nil {
+		log.Printf("Error fetching user info: %v", err)
+		c.AbortWithStatus(http.StatusInternalServerError)
+		return
+	}
+	defer resp.Body.Close()
+
+	var userInfo map[string]interface{}
+	err = json.NewDecoder(resp.Body).Decode(&userInfo)
+	if err != nil {
+		log.Printf("Error decoding user info: %v", err)
+		c.AbortWithStatus(http.StatusInternalServerError)
+		return
+	}
+
+	name := userInfo["name"].(string)
+	email := userInfo["email"].(string)
+	avatar := userInfo["picture"].(string)
+
 	// Normally, you'd save the token for later use (e.g., to make authenticated requests to Google APIs)
 	// For this example, we'll just print the token.
 	fmt.Println("Access Token:", token.AccessToken)
-	fmt.Println("Refresh Token:", token.RefreshToken)
+	// fmt.Println("Refresh Token:", token.RefreshToken)
 	fmt.Println("Token Type:", token.TokenType)
 	fmt.Println("Expiry:", token.Expiry.Format("2006-01-02 15:04:05"))
 
-	c.JSON(http.StatusOK, gin.H{
-		"message": "Successfully authenticated with Google!",
-	})
+	fmt.Println("Name:", name)
+	fmt.Println("Email:", email)
+	fmt.Println("Avatar:", avatar)
+
+	// TODO: Generate auth cookie instead of using Google OAuth access token
+	// 		 because we mait have regular email/password login flow
+	c.SetCookie("token", token.AccessToken, 3600, "/", "localhost", true, true)
+	c.Redirect(http.StatusTemporaryRedirect, "http://localhost:4200/auth/profile")
+	// c.JSON(http.StatusOK, gin.H{
+	// 	"message": "Successfully authenticated with Google!",
+	// })
 }
 
 func handleUserProfile(c *gin.Context) {
