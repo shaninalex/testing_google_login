@@ -88,10 +88,7 @@ func handleCallback(c *gin.Context) {
 	email := userInfo["email"].(string)
 	avatar := userInfo["picture"].(string)
 
-	// Normally, you'd save the token for later use (e.g., to make authenticated requests to Google APIs)
-	// For this example, we'll just print the token.
 	fmt.Println("Access Token:", token.AccessToken)
-	// fmt.Println("Refresh Token:", token.RefreshToken)
 	fmt.Println("Token Type:", token.TokenType)
 	fmt.Println("Expiry:", token.Expiry.Format("2006-01-02 15:04:05"))
 
@@ -103,9 +100,6 @@ func handleCallback(c *gin.Context) {
 	// 		 because we mait have regular email/password login flow
 	c.SetCookie("token", token.AccessToken, 3600, "/", "localhost", true, true)
 	c.Redirect(http.StatusTemporaryRedirect, "http://localhost:4200/auth/profile")
-	// c.JSON(http.StatusOK, gin.H{
-	// 	"message": "Successfully authenticated with Google!",
-	// })
 }
 
 func handleUserProfile(c *gin.Context) {

@@ -1,0 +1,31 @@
+version: "3.7"
+
+volumes:
+  postgres_data:
+
+services:
+
+  postgres:
+    image: postgres:latest
+    container_name: blog_database
+    environment:
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_DB=${POSTGRES_DB}
+    ports:
+      - 5432:5432
+    volumes:
+      - postgres_data:/var/lib/postgresql/data/
+  
+  db_migrate:
+    build: ./db_migrate
+    container_name: db_migrate
+    environment:
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_USER: ${POSTGRES_USER}
+      PGPASSWORD: ${POSTGRES_PASSWORD}
+      DB_NAME: ${POSTGRES_DB}
+    restart: on-failure
+    depends_on:
+      - postgres
