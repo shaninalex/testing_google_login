@@ -2,7 +2,7 @@ CREATE EXTENSION "uuid-ossp";
 
 CREATE TABLE "providers" (
     "id" SERIAL,
-    "name" VARCHAR(10) NOT NULL,
+    "name" VARCHAR(10) NOT NULL UNIQUE,
     PRIMARY KEY ("id")
 );
 

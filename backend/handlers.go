@@ -50,7 +50,7 @@ func (app *App) handleGoogleCallback(c *gin.Context) {
 	name := userInfo["name"].(string)
 	email := userInfo["email"].(string)
 	avatar := userInfo["picture"].(string)
-	id, err := app.database.CreateSocialUser(name, email, avatar) // , "google"
+	id, err := app.database.GetOrCreateSocialUser(name, email, avatar) // , "google"
 	if err != nil {
 		log.Println(err)
 		c.JSON(http.StatusBadRequest, gin.H{"error": "cant create user or user already exists"})
@@ -63,14 +63,29 @@ func (app *App) handleGoogleCallback(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "cant create token"})
 		return
 	}
-	// TODO: Generate auth cookie instead of using Google OAuth access token
-	// 		 because we mait have regular email/password login flow
+
 	c.SetCookie("token", jwt, 3600, "/", "localhost", true, true)
 	c.Redirect(http.StatusTemporaryRedirect, "http://localhost:4200/auth/profile")
 }
 
 func (app *App) handleUserProfile(c *gin.Context) {
-	c.JSON(http.StatusOK, gin.H{
-		"message": "User profile endpoint",
-	})
+	// TODO: unpack auth cookie in middleware and save in context
+	cookie_token, err := c.Cookie("token")
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "not authorized"})
+	}
+
+	user_id, err := validateToken(cookie_token)
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "not authorized", "message": "token not valid"})
+		return
+	}
+
+	user, err := app.database.GetUser(user_id)
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "unknown", "message": "Cant get user"})
+		return
+	}
+
+	c.JSON(http.StatusOK, &user)
 }
