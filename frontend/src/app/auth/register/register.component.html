@@ -1,0 +1,25 @@
+<div class="vh-100 d-flex align-items-center justify-content-center">
+
+    <div>
+
+        <form [formGroup]="registerForm" (ngSubmit)="Submit()" class="mb-3">
+            <div class="mb-3">
+                <input placeholder="Name" type="text" class="form-control" formControlName="name">
+            </div>
+            <div class="mb-3">
+                <input placeholder="Email" type="email" class="form-control" formControlName="email">
+            </div>
+            <div class="mb-3">
+                <input placeholder="Password" type="password" class="form-control" formControlName="password">
+            </div>
+            <div class="mb-3">
+                <input placeholder="Password Confirm" type="password" class="form-control"
+                    formControlName="password_confirm">
+            </div>
+            <div class="text-center">
+                <button [disabled]="!registerForm.valid" 
+                    class="btn btn-sm btn-success me-1" type="submit">Register</button>
+            </div>
+        </form>
+    </div>
+</div>

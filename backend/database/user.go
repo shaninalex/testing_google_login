@@ -1,6 +1,9 @@
 package database
 
-import "log"
+import (
+	"errors"
+	"log"
+)
 
 func (db *Database) GetOrCreateSocialUser(name string, email string, avatar string) (string, error) { //, provider string
 	// provider
@@ -24,7 +27,7 @@ func (db *Database) GetOrCreateSocialUser(name string, email string, avatar stri
 		return "", err
 	}
 
-	// TODO: Insert into user_providers table
+	// TODO: Insert into user_providers table (google)
 	return user_id, nil
 }
 
@@ -40,11 +43,8 @@ func (db *Database) GetUser(id string) (*User, error) {
 
 	var providers []string
 
-	rows, err := db.DB.Query(
-		`SELECT p."name"
-		FROM "user_providers" up
-		JOIN "providers" p ON up."provider_id" = p."id"
-		WHERE up."user_id" = $1`, id)
+	rows, err := db.DB.Query(`SELECT p."name" FROM "user_providers" up
+		JOIN "providers" p ON up."provider_id" = p."id" WHERE up."user_id" = $1`, id)
 	if err != nil {
 		log.Println(err)
 		return nil, err
@@ -58,4 +58,64 @@ func (db *Database) GetUser(id string) (*User, error) {
 
 	user.Providers = providers
 	return &user, nil
+}
+
+func (db *Database) GetUserByEmail(email string) (*User, error) {
+	var user User
+	err := db.DB.QueryRow(
+		`SELECT id, name, email, image FROM users WHERE id = $1;`, email).Scan(
+		&user.Id, &user.Name, &user.Email, &user.Image)
+	if err != nil {
+		log.Println(err)
+		return nil, err
+	}
+
+	var providers []string
+
+	rows, err := db.DB.Query(`SELECT p."name" FROM "user_providers" up
+		JOIN "providers" p ON up."provider_id" = p."id" WHERE up."user_id" = $1`, user.Id)
+	if err != nil {
+		log.Println(err)
+		return nil, err
+	}
+
+	for rows.Next() {
+		var p string
+		rows.Scan(&p)
+		providers = append(providers, p)
+	}
+
+	user.Providers = providers
+	return &user, nil
+}
+
+func (db *Database) RegularUserCreate(payload *RegisterPayload) (*User, error) {
+	var user User
+	err := db.DB.QueryRow(
+		`SELECT id, name, email, image FROM users WHERE email = $1;`, payload.Email).Scan(
+		&user.Id, &user.Name, &user.Email, &user.Image)
+	if err != nil {
+		log.Println("user not found, creating one")
+		password_hash, err := GenerateFromPassword(payload.Password)
+		if err != nil {
+			log.Println(err)
+			return nil, err
+		}
+
+		err = db.DB.QueryRow(
+			`INSERT INTO users (name, email, password_hash) VALUES ($1, $2, $3) RETURNING id;`,
+			payload.Name, payload.Email, password_hash).Scan(&user.Id)
+		if err != nil {
+			log.Println(err)
+			return nil, err
+		}
+
+		log.Println("user created")
+
+		// TODO: Insert into user_providers table (local)
+		return &user, nil
+	}
+
+	return nil, errors.New("User is already exists")
+
 }

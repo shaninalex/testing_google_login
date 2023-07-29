@@ -1,6 +1,7 @@
 package main
 
 import (
+	"backend/database"
 	"context"
 	"encoding/json"
 	"log"
@@ -88,4 +89,40 @@ func (app *App) handleUserProfile(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, &user)
+}
+
+func (app *App) handleRegularLogin(c *gin.Context) {
+	var payload database.LoginPayload
+	if err := c.ShouldBindJSON(&payload); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"errors": BuildErrorMessage(err)})
+		return
+	}
+
+	c.JSON(http.StatusBadRequest, gin.H{"errors": "Not implemented yeat..."})
+}
+
+func (app *App) handleRegularRegister(c *gin.Context) {
+	var payload database.RegisterPayload
+	if err := c.ShouldBindJSON(&payload); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"errors": BuildErrorMessage(err)})
+		return
+	}
+
+	user, err := app.database.RegularUserCreate(&payload)
+
+	if err != nil {
+		log.Println(err)
+		c.JSON(http.StatusBadRequest, gin.H{"errors": "cant create user"})
+		return
+	}
+
+	jwt, err := CreateJWT(user.Id, user.Email)
+	if err != nil {
+		log.Println(err)
+		c.JSON(http.StatusBadRequest, gin.H{"error": "cant create token"})
+		return
+	}
+
+	c.SetCookie("token", jwt, 3600, "/", "localhost", true, true)
+	c.JSON(http.StatusOK, gin.H{"status": true})
 }

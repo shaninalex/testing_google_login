@@ -7,11 +7,22 @@ export interface SignInlink {
 }
 
 export interface UserProfile {
-    Id: string
-    Name: string
-    Email: string
-    Image: string
-    Providers: Array<string>
+    id: string
+    name: string
+    email: string
+    image: string
+    providers: Array<string>
+}
+
+export interface RegisterPayload {
+    name: string
+    email: string
+    password: string
+    password_confirm: string
+}
+
+export interface RegularRegisterResponse {
+    status: boolean
 }
 
 
@@ -30,5 +41,18 @@ export class AuthService {
         return this.http.get<UserProfile>("/api/v1/user/profile").pipe(
             shareReplay()
         )
-    } 
+    }
+
+    regularRegister(payload: RegisterPayload): Observable<RegularRegisterResponse> {
+        return this.http.post<RegularRegisterResponse>("/api/v1/auth/register", payload).pipe(
+            shareReplay()
+        )
+    }
+
+    regularLogin(payload: RegisterPayload): Observable<RegularRegisterResponse> {
+        return this.http.post<RegularRegisterResponse>("/api/v1/auth/login", payload).pipe(
+            shareReplay()
+        )
+    }
+    
 }

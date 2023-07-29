@@ -44,6 +44,8 @@ func main() {
 
 	app.router.GET("/api/v1/auth/google/login", app.handleGoogleLogin)
 	app.router.GET("/api/v1/auth/google/callback", app.handleGoogleCallback)
+	app.router.POST("/api/v1/auth/login", app.handleRegularLogin)
+	app.router.POST("/api/v1/auth/register", app.handleRegularRegister)
 	app.router.GET("/api/v1/user/profile", app.handleUserProfile)
 	app.router.Run(":8080")
 }

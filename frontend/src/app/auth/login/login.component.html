@@ -1,9 +1,25 @@
 <div class="vh-100 d-flex align-items-center justify-content-center">
 
     <div>
-        <button class="btn btn-success" (click)="signInWithGoogle()">
-            <i class="fa fa-google" aria-hidden="true"></i>
-            Google login
-        </button>
+
+        <form [formGroup]="loginForm" (ngSubmit)="Submit()" class="mb-3">
+            <div class="mb-3">
+                <input placeholder="Email" type="email" class="form-control" formControlName="email">
+            </div>
+            <div class="mb-3">
+                <input placeholder="Password" type="password" class="form-control" formControlName="password">
+            </div>
+            <div class="text-center">
+                <button [disabled]="!loginForm.valid" class="btn btn-sm btn-success me-1" type="submit">Login</button>
+                <a class="btn btn-sm btn-outline-secondary" routerLink="/auth/register">Register</a>
+            </div>
+        </form>
+        <hr>
+        <div class="text-center">
+            <button class="btn btn-outline-danger" (click)="signInWithGoogle()">
+                <i class="fa fa-google" aria-hidden="true"></i>
+                Login with Google
+            </button>
+        </div>
     </div>
 </div>

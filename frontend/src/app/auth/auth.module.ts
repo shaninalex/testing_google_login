@@ -6,6 +6,8 @@ import { AuthComponent } from './auth.component';
 import { LoginComponent } from './login/login.component';
 import { AuthService } from './auth.service';
 import { ProfileComponent } from './profile/profile.component';
+import { ReactiveFormsModule } from '@angular/forms';
+import { RegisterComponent } from './register/register.component';
 
 
 @NgModule({
@@ -13,11 +15,13 @@ import { ProfileComponent } from './profile/profile.component';
         AuthComponent,
         LoginComponent,
         ProfileComponent,
+        RegisterComponent
     ],
     imports: [
         CommonModule,
         AuthRoutingModule,
-        HttpClientModule
+        HttpClientModule,
+        ReactiveFormsModule
     ],
     providers: [
         AuthService

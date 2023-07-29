@@ -4,14 +4,16 @@ import { FormControl, FormGroup, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 
 @Component({
-    selector: 'app-login',
-    templateUrl: './login.component.html'
+    selector: 'app-register',
+    templateUrl: './register.component.html'
 })
-export class LoginComponent {
+export class RegisterComponent {
 
-    loginForm: FormGroup = new FormGroup({
+    registerForm: FormGroup = new FormGroup({
+        "name": new FormControl("test", [Validators.required]),
         "email": new FormControl("test@test.com", [Validators.required, Validators.email]),
         "password": new FormControl("test@test.com", [Validators.required]),
+        "password_confirm": new FormControl("test@test.com", [Validators.required]) // TODO: validators equal
     })
 
     constructor(
@@ -19,17 +21,9 @@ export class LoginComponent {
         private router: Router
     ) { }
 
-    signInWithGoogle() {
-        this.authService.googleSignIn().subscribe({
-            next: (result: SignInlink) => {
-                window.location.href = decodeURIComponent(result.link);
-            }
-        })
-    }
-
     Submit(): void {
-        if (this.loginForm.valid) {
-            this.authService.regularLogin(this.loginForm.value).subscribe({
+        if (this.registerForm.valid) {
+            this.authService.regularRegister(this.registerForm.value).subscribe({
                 next: result => {
                     if (result.status) {
                         this.router.navigate(['/auth/profile']);
