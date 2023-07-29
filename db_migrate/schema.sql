@@ -2,7 +2,7 @@ CREATE EXTENSION "uuid-ossp";
 
 CREATE TABLE "providers" (
     "id" SERIAL,
-    "name" VARCHAR(50) NOT NULL,
+    "name" VARCHAR(10) NOT NULL,
     PRIMARY KEY ("id")
 );
 
@@ -32,3 +32,24 @@ CREATE TABLE "user_providers" (
     FOREIGN KEY ("user_id") REFERENCES "users" ("id"),
     FOREIGN KEY ("provider_id") REFERENCES "providers" ("id")
 );
+
+
+
+-- create user.
+-- Arguments:
+--      - p_name - user name
+--      - p_email - user email
+--      - p_image - user image ( avatar or user_pic, depends of providers)
+--      - p_provider - string, provider name, one of the providers in "providers" table 
+CREATE OR REPLACE PROCEDURE create_user(
+    p_name VARCHAR(256),
+    p_email VARCHAR(256),
+    p_image TEXT
+) LANGUAGE plpgsql
+AS $$
+BEGIN
+    INSERT INTO "users" ("name", "email", "image")
+    VALUES (p_name, p_email, p_image);
+    -- TODO: insert into user_providers
+    COMMIT;
+END;$$
