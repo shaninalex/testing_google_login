@@ -6,7 +6,7 @@ volumes:
 services:
 
   postgres:
-    image: postgres:latest
+    image: postgres:15.3
     container_name: blog_database
     environment:
       - POSTGRES_USER=${POSTGRES_USER}

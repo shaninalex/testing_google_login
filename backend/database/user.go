@@ -5,29 +5,25 @@ import (
 	"log"
 )
 
-func (db *Database) GetOrCreateSocialUser(name string, email string, avatar string) (string, error) { //, provider string
+func (db *Database) GetOrCreateSocialUser(name, email, avatar, provider string) (string, error) {
 	// provider
 	var user_id string
 	err := db.DB.QueryRow(
 		`SELECT id FROM users WHERE email = $1;`,
 		email).Scan(&user_id)
 	if err != nil {
-		log.Println(err)
-		return "", err
-	}
-	if user_id != "" {
+		err = db.DB.QueryRow(
+			`INSERT INTO users (name, email, image) VALUES ($1, $2, $3) RETURNING id;`,
+			name, email, avatar).Scan(&user_id)
+		if err != nil {
+			return "", err
+		}
+		_ = db.DB.QueryRow(
+			`INSERT INTO user_providers (user_id, provider) VALUES ($1, $2);`,
+			user_id, provider).Scan(&user_id)
 		return user_id, nil
 	}
 
-	err = db.DB.QueryRow(
-		`INSERT INTO users (name, email, image) VALUES ($1, $2, $3) RETURNING id;`,
-		name, email, avatar).Scan(&user_id)
-	if err != nil {
-		log.Println(err)
-		return "", err
-	}
-
-	// TODO: Insert into user_providers table (google)
 	return user_id, nil
 }
 
@@ -44,7 +40,7 @@ func (db *Database) GetUser(id string) (*User, error) {
 	var providers []string
 
 	rows, err := db.DB.Query(`SELECT p."name" FROM "user_providers" up
-		JOIN "providers" p ON up."provider_id" = p."id" WHERE up."user_id" = $1`, id)
+		JOIN "providers" p ON up."provider" = p."name" WHERE up."user_id" = $1`, id)
 	if err != nil {
 		log.Println(err)
 		return nil, err

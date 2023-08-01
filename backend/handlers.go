@@ -51,7 +51,7 @@ func (app *App) handleGoogleCallback(c *gin.Context) {
 	name := userInfo["name"].(string)
 	email := userInfo["email"].(string)
 	avatar := userInfo["picture"].(string)
-	id, err := app.database.GetOrCreateSocialUser(name, email, avatar) // , "google"
+	id, err := app.database.GetOrCreateSocialUser(name, email, avatar, "google")
 	if err != nil {
 		log.Println(err)
 		c.JSON(http.StatusBadRequest, gin.H{"error": "cant create user or user already exists"})
